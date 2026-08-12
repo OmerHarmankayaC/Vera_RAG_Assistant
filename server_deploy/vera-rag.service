@@ -1,0 +1,18 @@
+[Unit]
+Description=Vera-Finance RAG Q&A web app
+After=network.target ollama.service
+
+[Service]
+WorkingDirectory=/opt/vera-rag
+EnvironmentFile=-/opt/vera-rag/.env
+ExecStart=/opt/vera-rag/.venv/bin/uvicorn app:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+User=vera-rag
+Group=vera-rag
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/vera-rag
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
