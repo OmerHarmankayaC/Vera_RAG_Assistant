@@ -1,6 +1,8 @@
 # Vera-Finance Local RAG Q&A Assistant
 
-A fully offline, retrieval-augmented generation (RAG) Q&A assistant that answers questions about **Vera-Finance** (an AI-powered personal finance iOS app). All inference runs on-device on macOS (Apple Silicon) via **Microsoft Foundry Local** — no internet connection needed at query time.
+A fully offline, retrieval-augmented generation (RAG) Q&A assistant that answers questions about **Vera Finance** (an AI-powered personal finance iOS app). All inference runs on-device on macOS (Apple Silicon) via **Microsoft Foundry Local** — no internet connection needed at query time.
+
+**Live:** [rag.omerharmankaya.com](https://rag.omerharmankaya.com) — also embedded as the Q&A widget on the [Vera Finance landing page](https://github.com/OmerHarmankayaC/vera-landing-page) and on [omerharmankaya.com](https://omerharmankaya.com).
 
 ## Architecture
 
