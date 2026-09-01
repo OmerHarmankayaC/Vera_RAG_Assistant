@@ -1,6 +1,23 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+
+# Node
 node_modules/
+
+# Secrets
 .env
+
+# Generated: the vector index is rebuilt by `python ingest.py`
+*.db
+
+# Generated: production frontend bundle, built by `npm run build` in RAG/
+/server_deploy/static/
+
+# Duplicated brand assets — canonical copies live in RAG/public/
+/icon.png
+/vera_qa_spark_eight_rays_bold.png
+
+# macOS
 .DS_Store

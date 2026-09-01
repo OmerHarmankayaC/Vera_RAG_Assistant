@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import DemoNotice from '../components/DemoNotice';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function Home() {
               e.g. "Where does Vera store my data?"
             </div>
           </div>
+
+          <DemoNotice />
         </div>
       </div>
     </div>

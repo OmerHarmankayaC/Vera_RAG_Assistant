@@ -205,6 +205,87 @@ button {
   font-style: italic;
 }
 
+/* Demo Notice — sets expectations about the hosted demo's speed and limits */
+.demo-notice {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--section-border);
+  max-width: 600px;
+}
+
+.demo-notice-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin-bottom: 0.75rem;
+}
+
+.demo-notice-lead {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.demo-notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  font-size: 0.85rem;
+}
+
+.demo-notice-list dt {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.demo-notice-list dd {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Compact variant: a single expandable line above the chat input */
+.demo-notice-compact {
+  margin: 0 0 1.25rem;
+  padding-top: 0;
+  border-top: none;
+  border-bottom: 1px solid var(--hairline-border);
+  padding-bottom: 0.75rem;
+  max-width: none;
+}
+
+.demo-notice-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.demo-notice-toggle:hover {
+  color: var(--text-color);
+}
+
+.demo-notice-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.demo-notice-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.demo-notice-compact .demo-notice-list {
+  margin-top: 0.9rem;
+  font-size: 0.8rem;
+}
+
 /* Chat Page (standalone route, no shared header/footer chrome) */
 .chat-page {
   background-color: var(--chat-bg);
@@ -260,6 +341,28 @@ button {
   align-items: flex-end;
   text-align: right;
   max-width: 80%;
+}
+
+/* System notices (rate limits, server errors) — visibly not a model answer */
+.message.system {
+  border-left: 2px solid var(--accent-color);
+  padding-left: 0.9rem;
+}
+
+.message.system .speaker-label {
+  color: var(--accent-color);
+  opacity: 1;
+}
+
+.message.system .message-content {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.chat-empty-state {
+  margin: auto;
+  text-align: center;
+  font-weight: 600;
 }
 
 .speaker-label {
@@ -386,6 +489,21 @@ button {
   opacity: 0.7;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.typing-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+/* Quota / cooldown line under the input */
+.chat-status {
+  min-height: 1.2rem;
+  padding-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 @keyframes blink {

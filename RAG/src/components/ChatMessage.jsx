@@ -1,22 +1,20 @@
 const SOURCES_PATTERN = /\n\(sources?:\s*[^)]*\)\s*$/i;
 
-export default function ChatMessage({ text, sender }) {
-  const isUser = sender === 'user';
-  const speakerLabel = isUser ? 'YOU' : 'VERA';
+const SPEAKER_LABEL = { user: 'YOU', ai: 'VERA', system: 'NOTICE' };
 
-  const sourcesMatch = !isUser && text.match(SOURCES_PATTERN);
+export default function ChatMessage({ text, sender }) {
+  const isAnswer = sender === 'ai';
+
+  // Only model answers carry a trailing "(sources: ...)" line worth splitting out.
+  const sourcesMatch = isAnswer ? text.match(SOURCES_PATTERN) : null;
   const mainText = sourcesMatch ? text.slice(0, sourcesMatch.index) : text;
   const sourcesText = sourcesMatch ? sourcesMatch[0].trim() : null;
 
   return (
-    <div className={`message ${isUser ? 'user' : 'ai'}`}>
-      <div className="speaker-label">{speakerLabel}</div>
-      <div className="message-content">
-        {mainText}
-      </div>
-      {sourcesText && (
-        <div className="message-sources">{sourcesText}</div>
-      )}
+    <div className={`message ${sender}`}>
+      <div className="speaker-label">{SPEAKER_LABEL[sender] ?? 'VERA'}</div>
+      <div className="message-content">{mainText}</div>
+      {sourcesText && <div className="message-sources">{sourcesText}</div>}
     </div>
   );
 }

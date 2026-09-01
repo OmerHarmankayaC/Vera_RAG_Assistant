@@ -1,16 +1,57 @@
-# React + Vite
+# Vera Q&A — frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite single-page app for the hosted demo of the
+[Vera-Finance Local RAG Q&A Assistant](../README.md). It is a thin client: it streams tokens
+from `POST /api/ask` and renders them, with the retrieval and generation happening in
+[`server_deploy/`](../server_deploy/README.md).
 
-Currently, two official plugins are available:
+## Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+src/
+├── pages/
+│   ├── Home.jsx          # landing view + the "before you start" demo notice
+│   ├── ChatPage.jsx      # standalone chat route (no shared header chrome)
+│   └── Chat.jsx          # streaming, error handling, rate-limit countdown
+└── components/
+    ├── DemoNotice.jsx    # expectations: slow server, small model, usage limits
+    ├── ChatMessage.jsx   # user / assistant / system-notice rendering + source line
+    ├── SampleQuestions.jsx
+    ├── Header.jsx
+    └── Footer.jsx
+```
 
-## React Compiler
+Design is deliberately editorial and flat: one accent colour, hairline rules, no cards or
+shadows. All styling is plain CSS with custom properties in `src/index.css` — no framework.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What the chat client handles
 
-## Expanding the Oxlint configuration
+- **Streaming.** Reads the `text/plain` response body incrementally so tokens appear as the
+  model produces them, rather than after 30 seconds of blank screen.
+- **Rate limits.** A `429` carries the exact limit that was hit; the message is rendered
+  verbatim as a `NOTICE` message, the input is disabled, and a countdown ticks down from
+  `Retry-After`.
+- **Quota display.** `X-Demo-Quota-Remaining-Day` from each response drives the
+  "*N questions left today*" line under the input.
+- **Failure.** Network errors and server errors get distinct, non-alarming copy — on a
+  CPU-only demo box, both are expected occasionally.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+The usage numbers in `DemoNotice.jsx` are kept in sync by hand with `DEMO_RATE_LIMITS` in
+[`server_deploy/config.py`](../server_deploy/config.py).
+
+## Development
+
+```bash
+npm install
+npm run dev -- --port 5183
+```
+
+`/api` is proxied to `http://127.0.0.1:8010` (the dev backend). Override with
+`VITE_API_PROXY=http://127.0.0.1:8000 npm run dev`.
+
+```bash
+npm run lint      # oxlint
+npm run build     # builds into ../server_deploy/static/, served by FastAPI under /static
+```
+
+Deploy with [`../deploy-frontend.sh`](../deploy-frontend.sh) — it builds and rsyncs in one step.

@@ -2,16 +2,31 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "vera-external-api",
-      "runtimeExecutable": "/Users/omerharmankaya/Desktop/microsoft/.venv/bin/python",
-      "runtimeArgs": ["-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", "8010"],
+      "name": "rag-backend",
+      "runtimeExecutable": "../.venv/bin/python",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8010",
+        "--reload"
+      ],
       "port": 8010,
-      "cwd": "/Users/omerharmankaya/Desktop/microsoft/server_deploy"
+      "cwd": "server_deploy"
     },
     {
       "name": "rag-frontend-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5183"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5183"
+      ],
       "port": 5183,
       "cwd": "RAG"
     }
