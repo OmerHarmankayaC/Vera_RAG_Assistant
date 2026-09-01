@@ -27,7 +27,7 @@ retrieve the passages that actually answer the question, then instruct the model
 *only* from them.
 
 This project applies that to [Vera Finance](https://vera.staticorbit.dev/), an AI-powered
-personal finance iOS app. Twelve curated documents describe the product; the assistant
+personal finance iOS app. Thirteen curated documents describe the product; the assistant
 answers questions about it, cites which document each answer came from, and says
 *"I don't have that information"* rather than guessing when the answer isn't in the corpus.
 
@@ -39,7 +39,7 @@ Everything — embeddings, retrieval and generation — runs on the local machin
 | **Embedding model** | `qwen3-embedding-0.6b` — 1024-dimensional vectors |
 | **Chat model** | `qwen2.5-1.5b` |
 | **Vector store** | SQLite, one file, brute-force cosine similarity |
-| **Knowledge base** | 12 markdown documents → 35 chunks |
+| **Knowledge base** | 13 markdown documents → 38 chunks |
 | **Typical latency** | ~1–3 s per answer on Apple Silicon GPU |
 | **Dependencies** | `foundry-local-sdk`, `openai`, `numpy` |
 
@@ -56,7 +56,7 @@ flowchart TD
     Q["User question"] --> A["answer_query()<br/>answer.py"]
     A --> R["get_top_chunks(q, k)<br/>retrieval.py"]
     R --> E["Embed query<br/>qwen3-embedding-0.6b"]
-    E --> S[("SQLite: vera_rag.db<br/>35 chunks + vectors")]
+    E --> S[("SQLite: vera_rag.db<br/>38 chunks + vectors")]
     S --> C["Cosine similarity<br/>→ top-k chunks"]
     C --> P["Grounded prompt:<br/>context + rules + question"]
     P --> M["Chat model<br/>qwen2.5-1.5b"]
@@ -156,9 +156,9 @@ python ingest.py
 ```
 
 ```
-Found 12 document(s) in docs_vera/
-Split into 35 chunk(s). Generating embeddings...
-Ingestion complete: 35 chunks stored in vera_rag.db
+Found 13 document(s) in docs_vera/
+Split into 38 chunk(s). Generating embeddings...
+Ingestion complete: 38 chunks stored in vera_rag.db
 ```
 
 ### 4. Ask questions
@@ -215,7 +215,13 @@ consecutive short paragraphs and glues headings to the paragraph that follows.
 
 The bundled corpus documents Vera Finance: expense tracking, AI receipt scanning, inventory
 and shopping, investment portfolio, savings goals, financial health score, personal
-inflation, achievements, free vs premium plans, and terms & privacy.
+inflation, achievements, free vs premium plans, platform availability, and terms & privacy.
+
+Curation is part of the engineering. Asked *"Does Vera Finance have an Android app?"*, the
+assistant used to assert that one existed — no document stated the platform, so the model
+filled the gap from its own priors. Adding `platform-and-availability.md`, which says
+explicitly what the app does *not* run on, turned that into a correct answer. A grounding
+failure is often a documentation gap wearing a disguise.
 
 ---
 
@@ -232,7 +238,7 @@ inflation, achievements, free vs premium plans, and terms & privacy.
 ├── config.py                # models, paths, retrieval & sampling settings
 ├── test_text_guard.py
 ├── requirements.txt
-├── docs_vera/               # the knowledge base (12 markdown passages)
+├── docs_vera/               # the knowledge base (13 markdown passages)
 │
 ├── REQUIREMENTS.md          # original specification
 ├── REPORT.md                # project report: decisions, trade-offs, limitations
@@ -308,7 +314,7 @@ accuracy, a distinct message for every rule), and the `/api/ask` 429 payload end
 
 ## Design decisions
 
-- **SQLite instead of a vector database.** At 35 chunks, brute-force cosine similarity is
+- **SQLite instead of a vector database.** At 38 chunks, brute-force cosine similarity is
   microseconds of NumPy. Pinecone or Chroma would add an external service, a schema and a
   failure mode for zero measurable benefit.
 - **Embeddings stored as JSON text.** Inspectable with any SQLite browser. Binary blobs
@@ -332,10 +338,10 @@ Full reasoning, including model comparisons, is in [REPORT.md](REPORT.md).
 ## Known limitations
 
 - Answer quality is bounded by a 1.5B model: occasionally stiff phrasing, and grounding
-  discipline that is good but not perfect. It refuses reliably when a topic is absent
-  entirely (pricing, named people), but can still over-answer when a question is *adjacent*
-  to the corpus — asked about platform availability, which the documents never state, it
-  sometimes asserts one instead of declining.
+  discipline that is good but not perfect. It refuses reliably when a topic is genuinely
+  absent (pricing, named people), but an indirectly phrased question can fall back to a
+  refusal even when the corpus does cover it — "Is there a web version?" retrieves poorly
+  where "Vera Finance hangi platformlarda var?" answers correctly.
 - Retrieval is purely semantic — no BM25/keyword fallback, so very short or ambiguous
   queries can surface suboptimal chunks.
 - Single-turn: each question is answered independently, with no conversation memory.

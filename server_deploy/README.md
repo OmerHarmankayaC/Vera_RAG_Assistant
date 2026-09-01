@@ -113,6 +113,9 @@ sudo chown -R vera-rag:vera-rag /opt/vera-rag
 > The index must be rebuilt on the server: embeddings are model-specific, so a
 > `vera_rag.db` built locally with `qwen3-embedding-0.6b` (1024-d) is not interchangeable
 > with one built by `nomic-embed-text` (768-d).
+>
+> Re-run `ingest.py` (and restart the service) **whenever `docs_vera/` changes** — the
+> server answers from its own copy of the index, not from the repository.
 
 **4 — Service**
 

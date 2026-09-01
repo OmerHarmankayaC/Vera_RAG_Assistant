@@ -12,14 +12,14 @@ Small local models know nothing about a specific niche product like Vera-Finance
 
 Four small Python modules over a single SQLite file:
 
-1. **Ingestion** (`ingest.py`) — reads markdown passages from `docs_vera/`, splits them into paragraph-level chunks (short paragraphs merged, headings glued to their following paragraph), embeds each chunk with `qwen3-embedding-0.6b`, and stores `(source, content, embedding)` rows in SQLite. The pipeline is idempotent: each run rebuilds the table. The current corpus is 12 documents → 35 chunks of 1024-dimensional vectors.
+1. **Ingestion** (`ingest.py`) — reads markdown passages from `docs_vera/`, splits them into paragraph-level chunks (short paragraphs merged, headings glued to their following paragraph), embeds each chunk with `qwen3-embedding-0.6b`, and stores `(source, content, embedding)` rows in SQLite. The pipeline is idempotent: each run rebuilds the table. The current corpus is 13 documents → 38 chunks of 1024-dimensional vectors.
 2. **Retrieval** (`retrieval.py`) — embeds the query and ranks every stored chunk by cosine similarity (NumPy, brute force). Returns the top-*k* chunks with source names and scores.
 3. **Generation** (`answer.py`) — builds a system prompt containing the retrieved chunks and strict grounding rules ("use only the context; say 'I don't have that information' if it's not covered; cite the source"), then calls the local chat model (`qwen2.5-1.5b`) through the Foundry Local SDK.
 4. **CLI** (`main.py`) — interactive loop with streamed output and per-answer timing.
 
 ## Design decisions
 
-- **SQLite over a vector DB** — with 35 chunks, brute-force cosine similarity is microseconds of work; a vector database would add operational complexity for zero benefit at this scale.
+- **SQLite over a vector DB** — with 38 chunks, brute-force cosine similarity is microseconds of work; a vector database would add operational complexity for zero benefit at this scale.
 - **Embeddings stored as JSON** — human-inspectable and portable; binary blobs would save space but complicate debugging for negligible gain here.
 - **Model choice** — `qwen2.5-1.5b` balances answer quality and latency on Apple Silicon GPU (Metal via ONNX Runtime). The 0.5b variant is faster but noticeably weaker at following the grounding instructions; larger models (4b+) improve quality but push response times past the 1–3 s target.
 - **Paragraph-level chunking** — the source documents are short, hand-written passages, so paragraphs are natural semantic units; no overlapping-window chunking needed.
@@ -44,11 +44,15 @@ Two failure modes showed up in testing that no amount of retrieval quality addre
 
 **Degeneration loops.** Asked something awkward — often a Turkish question against the English corpus — the model sometimes repeats a fragment until it exhausts `MAX_TOKENS` (`"...tamamen tamamen tamamen..."` ×125, or 300 characters of `#`). A parameter sweep across temperature and frequency/presence penalties found no safe setting: every configuration that fixed one question introduced a loop on another, and removing the penalties entirely made things worse. The fix is therefore deterministic rather than statistical — `text_guard.py` detects a short fragment repeating back-to-back, stops generation immediately, keeps the usable prefix and states plainly that generation was cut short. On the CPU-only demo server this also saves the compute that would have gone into generating the rest of the noise.
 
-**Over-answering on adjacent topics.** Refusal is reliable when a topic is absent outright (pricing, named individuals), but a question *near* the corpus — platform availability, which the documents never state — can still draw an assertion instead of a refusal. This is a capability limit of a 1.5B model following a multi-step instruction, not a retrieval problem; a larger chat model resolves it at the cost of the latency target.
+**Over-answering on adjacent topics.** Refusal was reliable when a topic was absent outright (pricing, named individuals), but a question *near* the corpus drew an assertion instead. Asked *"Does Vera Finance have an Android app?"*, the assistant claimed one existed: no document mentioned the platform at all, so the model filled the silence from its own priors rather than declining.
+
+The instinct was to fix this in the prompt. That was tested and it backfired — removing the word "platform" from the refusal examples in the system prompt made the model refuse *more*, including questions it had previously answered correctly, which is a useful reminder of how unstable prompt surgery is on a 1.5B model. The change was reverted.
+
+The fix was in the corpus instead: `platform-and-availability.md` now states plainly what the app runs on *and* what it does not (no Android, no web, no desktop). Android and Turkish platform questions are now answered correctly. What remains is milder — an indirectly phrased query ("Is there a web version?") retrieves the relevant chunk only third and falls back to a refusal, which is the short-query weakness noted below rather than a fabrication. A grounding failure, in other words, is often a documentation gap in disguise, and a wrong answer is a worse outcome than a conservative one.
 
 ## Known limitations
 
-- Quality is bounded by a 1.5B-parameter model: occasional stiff phrasing, and grounding discipline, while good, is not perfect (see the over-answering case above).
+- Quality is bounded by a 1.5B-parameter model: occasional stiff phrasing, and grounding discipline, while good, is not perfect.
 - Retrieval is purely semantic; there is no keyword/BM25 fallback, so very short or ambiguous queries can retrieve suboptimal chunks.
 - The knowledge base is manually curated; the assistant only knows what the docs say (this is also the point).
 - Single-turn: no conversation memory between questions (each question is answered independently).
